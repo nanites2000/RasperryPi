@@ -185,7 +185,7 @@ class check_button(Thread):
 root = Tk()
 
 
-mainframe = ttk.Frame(root, padding="30 30 30 30")
+mainframe = ttk.Frame(root, padding="30 30 0 30")
 mainframe.columnconfigure((0,1,2,3,4,5,6,7,8,9,10), weight=1)
 mainframe.grid(column=0, row=0, sticky=(N, W, E, S))
 
@@ -198,16 +198,16 @@ mainframe.rowconfigure(1, weight=15)
 mainframe.rowconfigure(2, weight=5)
 
 currentCycleTime = StringVar()
-currentCycle = ttk.Label(mainframe,textvariable=currentCycleTime,padding="200 0 200 0") 
+currentCycle = ttk.Label(mainframe,textvariable=currentCycleTime,padding="400 0 400 0") 
 currentCycle.config(font=('Helvetica',250,'bold'))
 currentCycle.grid(row=0,column=1, sticky=(E,W))
 
 averageCycleTime = StringVar()
-averageCycle = ttk.Label(mainframe,textvariable=averageCycleTime,padding="200 0 200 0") 
+averageCycle = ttk.Label(mainframe,textvariable=averageCycleTime,padding="400 0 400 0") 
 averageCycle.config(font=('Helvetica',250,'bold'))
 averageCycle.grid(row=1,column=1, sticky=(E,W))
 
-buttonframe = ttk.Frame(mainframe, padding="30 30 30 30")
+buttonframe = ttk.Frame(mainframe, padding="30 0 30 30")
 buttonframe.grid(column=1, row=2, columnspan = 5)
 
 downtimeLabel = ttk.Label(buttonframe,text="Downtime",padding="10 10 10 10") 
@@ -243,7 +243,7 @@ overallAverageValue.grid(row=0,column=5, sticky=(E,W))
 fig = plt.figure(1)
 canvas = FigureCanvasTkAgg(fig, master=root)
 plot_widget = canvas.get_tk_widget()
-canvas.get_tk_widget().grid(row=0, column=5)
+canvas.get_tk_widget().place(x=1100, y=300)
 graph = fig.add_subplot(111)
 graph.set_xlabel('Date')
 now = datetime.datetime.now()
