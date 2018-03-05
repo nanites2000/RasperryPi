@@ -5,6 +5,13 @@ import gpiozero as io
 import time
 from collections import deque
 import statistics as stat
+import datetime
+import numpy as np
+
+import matplotlib
+matplotlib.use('TkAgg')
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(7, hold_time = 7, bounce_time=2)
 cyclingButton = io.DigitalOutputDevice(21)
@@ -105,6 +112,13 @@ class check_button(Thread):
 						cycleQue.append(cycleTime)
 						totalMean = stat.mean(cycleQue)
 						overallAverageValueString.set(round(totalMean,1))
+					#now put the values into the graph and replot
+					now = datetime.datetime.now()
+					timeGraph.append(now.hour + now.minute/60 + now.second/3600)
+					jarsGraph.append(count)
+					#plt.clear()
+					plt.plot(timeGraph,jarsGraph, 'k')
+					canvas.draw()
 					
 					
 			#this checks how long since last button press and 
@@ -151,12 +165,12 @@ mainframe.columnconfigure(2, weight=1)
 mainframe.rowconfigure(2, weight=1)
 
 currentCycleTime = StringVar()
-currentCycle = ttk.Label(mainframe,textvariable=currentCycleTime,padding="600 0 600 0") 
+currentCycle = ttk.Label(mainframe,textvariable=currentCycleTime,padding="300 0 300 0") 
 currentCycle.config(font=('Helvetica',250,'bold'))
 currentCycle.grid(row=0,column=1, sticky=(E,W))
 
 averageCycleTime = StringVar()
-averageCycle = ttk.Label(mainframe,textvariable=averageCycleTime,padding="600 0 600 0") 
+averageCycle = ttk.Label(mainframe,textvariable=averageCycleTime,padding="300 0 300 0") 
 averageCycle.config(font=('Helvetica',250,'bold'))
 averageCycle.grid(row=1,column=1, sticky=(E,W))
 
@@ -193,8 +207,27 @@ overallAverageValue = ttk.Label(buttonframe,textvariable=overallAverageValueStri
 overallAverageValue.config(font=('Helvetica',75,'bold'))
 overallAverageValue.grid(row=0,column=5, sticky=(E,W))
 
+fig = plt.figure(1)
+canvas = FigureCanvasTkAgg(fig, master=root)
+plot_widget = canvas.get_tk_widget()
+canvas.get_tk_widget().grid(row=0, column=3)
+graph = fig.add_subplot(111)
+graph.set_xlabel('Date')
+now = datetime.datetime.now()
+global timeGraph
+global jarsGraph
+a = []
+b = []
+timeGraph = deque(a)
+jarsGraph = deque(b)
+plt.plot(timeGraph,jarsGraph, 'k')
+plt.xlabel('Time')
+plt.ylabel('Jars')
+plt.title('Production')
+
+
 root.title("Cycle Time") 
-root.geometry('1600x1200')
+root.geometry('1900x1200')
 
 
 chk1 = check_button(currentCycleTime)
