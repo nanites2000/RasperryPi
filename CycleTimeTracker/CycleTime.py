@@ -8,6 +8,13 @@ import statistics as stat
 import datetime
 import numpy as np
 
+import sqlite3
+try:
+	connection = sqlite3.connect("cycleTime.db",check_same_thread = False)
+	cursor = connection.cursor()
+except:
+	print("Database Filed to Connect")
+	
 import matplotlib
 matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
@@ -31,9 +38,37 @@ redTime = 12
 global downtime
 downtime = 0
 
+#set up the table to enter data into
+sql_command = """
+CREATE TABLE  IF NOT EXISTS AutoJarCycleTimes ( 
+datetime text,
+cycleTime REAL 
+);"""
+cursor.execute(sql_command)
+
+
+
+cursor.execute("SELECT * FROM autojarcycletimes")
+print("fetchall:")
+result = cursor.fetchall()
+for r in result:
+    print(r)
+
+
+
+
+
+
 
 class check_button(Thread):
 	global previous
+
+	#try:
+	#	connection2 = sqlite3.connect("cycleTime.db")
+	#	cursor2 = connection2.cursor()
+	#except:
+	#	print("Database2 Filed to Connect")
+	
 
 	def __init__(self, labelText):
 		Thread.__init__(self)
@@ -69,6 +104,9 @@ class check_button(Thread):
 			
 
 	def checkloop(self):
+		global connection2
+		global cursor2
+		
 		global previous
 		global downtime
 		debounceMax = .5
@@ -99,12 +137,7 @@ class check_button(Thread):
 				breakSum += i[1]
 			goalx.append(startTime+8)
 			goaly.append((8-breakSum/60)*3600/cycleGoal) 	
-			plt.plot(goalx,goaly, 'r')
-				
-				
-				
-				
-			
+			plt.plot(goalx,goaly, 'r')			
 			
 		
 		
@@ -148,6 +181,20 @@ class check_button(Thread):
 					goalPlot()
 					plt.plot(timeGraph,jarsGraph, 'k')#also'ro' works
 					canvas.draw()
+				
+					#sql_command ="INSERT INTO AutoJarCycleTimes (time,cycleTime) VALUES (%s, %s);" %(now, cycleTime)
+					#cursor2.execute(sql_command)
+					timestring = now.strftime('%Y-%m-%d %X.%f')
+					sql_command ="INSERT INTO AutoJarCycleTimes (datetime, cycleTime) VALUES ('%s', %s);" %(timestring,cycleTime)
+					cursor.execute(sql_command) 
+					connection.commit()
+					
+					#cursor.execute("SELECT AVG(cycleTime) FROM autojarcycletimes")
+					#print("fetchall:")
+					#result = cursor.fetchall()
+					#for r in result:
+					#	print(r)
+
 					
 					
 			#this checks how long since last button press and 
