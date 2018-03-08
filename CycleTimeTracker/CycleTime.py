@@ -48,11 +48,6 @@ cursor.execute(sql_command)
 
 
 
-cursor.execute("SELECT * FROM autojarcycletimes")
-print("fetchall:")
-result = cursor.fetchall()
-for r in result:
-    print(r)
 
 
 

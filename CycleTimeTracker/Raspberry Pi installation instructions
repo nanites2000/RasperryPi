@@ -1,0 +1,19 @@
+Fisrt download NOOBS
+insert the microsd into the pi.
+It should load up a boot menu when turned on
+select the first option raspbian.
+
+Now in the terminal you need to set the default python to python 3:
+type in:
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python2.7 1
+and
+update-alternatives --install /usr/bin/python python /usr/bin/python3.5 2
+then if you type:
+python --version
+it should respond Python 3.5
+
+
+
+
+use pip install xxxxx to install the packages in the terminal
+you need matplotlib and cairocffi (which is needed to run on the pi I guess)
