@@ -59,7 +59,7 @@ for r in result:
 	
 #this finds the average monthly cycletime for all the months 
 
-statement = ("SELECT strftime('%d', datetime) as valMonth, avg(cycleTime) as totalCycleMonth FROM autojarcycletimes GROUP BY valMonth")
+statement = ("SELECT strftime('%m', datetime) as valMonth, avg(cycleTime) as totalCycleMonth FROM autojarcycletimes GROUP BY valMonth")
 cursor.execute(statement)
 print("fetchall month sums:")
 result = cursor.fetchall()

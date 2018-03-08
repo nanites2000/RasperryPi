@@ -35,8 +35,9 @@ global redTime
 greentime = 2.8
 yellowTime = 3.6
 redTime = 12
-global downtime
-downtime = 0
+
+
+
 
 #set up the table to enter data into
 sql_command = """
@@ -49,7 +50,37 @@ cursor.execute(sql_command)
 
 
 
-
+def resetShift():
+	global stack
+	global downtime
+	global count
+	global totalMean
+	global cycleQue
+	global jarGraph
+	global timeGraph
+	
+	downtime = 0
+	stack = []
+	downtimeValueString.set(0)
+	count = 0
+	countValueString.set(count)
+	totalMean = 0
+	overallAverageValueString.set(0)
+	cycleQue = []
+	averageCycleTime.set(0)
+	currentCycleTime.set(0)
+	averageCycle.configure(background = "tan")	
+	jarGraph = []
+	timeGraph = []
+	
+	#reset the graph
+	plt.clf()
+	canvas.draw()
+		
+	
+	print ("Reset")
+	
+	
 
 
 
@@ -76,6 +107,7 @@ class check_button(Thread):
 	def movingAverage(self, newTime):
 		global stack
 		global redTime
+		global meanTime
 		size =10
 		
 		
@@ -99,11 +131,18 @@ class check_button(Thread):
 			
 
 	def checkloop(self):
+		
+		
 		global connection2
 		global cursor2
 		
 		global previous
 		global downtime
+		global count
+		global cycleQue
+		global timeGraph
+		global jarGraph
+		
 		debounceMax = .5
 		debounce = 0
 		count = 0
@@ -115,8 +154,11 @@ class check_button(Thread):
 		startTime = 6
 		cycleGoal = 34 #in seconds
 		
+		
+		
+		
 		def goalPlot():
-			breaks = [[6,30],[8,15],[10,15],[12,30]]  #[starttime, length in mins]
+			breaks = [[6,10],[8.16,20],[11.5,30]]  #[starttime, length in mins]
 			goalxarray= [startTime]
 			goalyarray =[0]
 			goalx = deque(goalxarray)
@@ -172,9 +214,9 @@ class check_button(Thread):
 					#now put the values into the graph and replot
 					now = datetime.datetime.now()
 					timeGraph.append(now.hour + now.minute/60 + now.second/3600)
-					jarsGraph.append(count)
+					jarGraph.append(count)
 					goalPlot()
-					plt.plot(timeGraph,jarsGraph, 'k')#also'ro' works
+					plt.plot(timeGraph,jarGraph, 'k')#also'ro' works
 					canvas.draw()
 				
 					#sql_command ="INSERT INTO AutoJarCycleTimes (time,cycleTime) VALUES (%s, %s);" %(now, cycleTime)
@@ -213,7 +255,7 @@ class check_button(Thread):
 			if  inputPressActive.is_pressed == 0:
 				debounce += 1
 				
-			if debounce > 2000 and inputPressActive.is_pressed == 0: #this is used for debounce
+			if debounce > 1000 and inputPressActive.is_pressed == 0: #this is used for debounce
 				previous = 0
 					
 				
@@ -278,9 +320,14 @@ overallAverageLabel.grid(row=0,column=4, sticky=(E,W))
 
 overallAverageValueString =StringVar()
 overallAverageValueString.set("0")
-overallAverageValue = ttk.Label(buttonframe,textvariable=overallAverageValueString,padding="15 15 0 15") 
+overallAverageValue = ttk.Label(buttonframe,textvariable=overallAverageValueString,padding="15 15 50 15") 
 overallAverageValue.config(font=('Helvetica',75,'bold'))
 overallAverageValue.grid(row=0,column=5, sticky=(E,W))
+
+shiftReset = Button(buttonframe, text = 'New Shift', command = resetShift)
+shiftReset.grid(row=0,column=6)
+shiftReset.config(font=('Helvetica',75,'bold'))
+shiftReset.config(bg=("light blue"))
 
 fig = plt.figure(1)
 canvas = FigureCanvasTkAgg(fig, master=root)
@@ -290,12 +337,12 @@ graph = fig.add_subplot(111)
 graph.set_xlabel('Date')
 now = datetime.datetime.now()
 global timeGraph
-global jarsGraph
+global jarGraph
 a = []
 b = []
 timeGraph = deque(a)
-jarsGraph = deque(b)
-plt.plot(timeGraph,jarsGraph, 'k')
+jarGraph = deque(b)
+plt.plot(timeGraph,jarGraph, 'k')
 plt.xlabel('Time')
 plt.ylabel('Jars')
 plt.title('Production')
