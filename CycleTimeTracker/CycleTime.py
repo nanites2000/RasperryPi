@@ -8,6 +8,7 @@ import statistics as stat
 import datetime
 import numpy as np
 
+
 import sqlite3
 try:
 	connection = sqlite3.connect("cycleTime.db",check_same_thread = False)
@@ -22,7 +23,7 @@ import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(7, hold_time = 7, bounce_time=2)
 cyclingButton = io.DigitalOutputDevice(21)
-cyclingButton.blink(on_time=1,off_time=29)
+cyclingButton.blink(on_time=1,off_time=1)
 global previous
 previous = False
 global size
@@ -35,7 +36,8 @@ global redTime
 greentime = 2.8
 yellowTime = 3.6
 redTime = 12
-
+global alreadyReset 
+alreadyReset = 0
 
 
 
@@ -59,6 +61,15 @@ def resetShift():
 	global jarGraph
 	global timeGraph
 	
+	
+	#put old data into a textbox
+	previousText.config(state = "normal")
+	previousText.delete("1.0", "end")
+	insertText = "PREVIOUS SHIFT\nDowntime= "+str(downtime) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
+	previousText.insert('1.0',insertText)	
+	previousText.config(state = "disabled")
+	
+	
 	downtime = 0
 	stack = []
 	downtimeValueString.set(0)
@@ -76,8 +87,9 @@ def resetShift():
 	#reset the graph
 	plt.clf()
 	canvas.draw()
-		
 	
+	
+
 	print ("Reset")
 	
 	
@@ -135,7 +147,7 @@ class check_button(Thread):
 		
 		global connection2
 		global cursor2
-		
+		global totalMean
 		global previous
 		global downtime
 		global count
@@ -291,6 +303,15 @@ averageCycle = ttk.Label(mainframe,textvariable=averageCycleTime,padding="400 0 
 averageCycle.config(font=('Helvetica',250,'bold'))
 averageCycle.grid(row=1,column=1, sticky=(E,W))
 
+previousText = Text(mainframe, width = 20, height = 4)
+previousText.grid(column = 2, row = 0,sticky=(N))
+previousText.config(font=('Helvetica',30,'bold'))
+previousText.config(state = "disabled")
+previousText.config(bg="tan")
+
+
+
+#start button fame at bottom
 buttonframe = ttk.Frame(mainframe, padding="30 0 30 30")
 buttonframe.grid(column=1, row=2, columnspan = 5)
 
@@ -351,8 +372,21 @@ plt.title('Production')
 root.title("Cycle Time") 
 root.geometry('1900x1200')
 
-
+def checkTime(): # used to check the time to see if it is time to reset the shifts ie 6:00 and 2:00
+	global alreadyReset
+	now = datetime.datetime.now()
+	switchMinute = 41
+	if now.minute == switchMinute and alreadyReset == 0:
+		resetShift()
+		print("shift has been reset!!!!!!!!!!!11")
+		alreadyReset = 1
+	if now.minute == switchMinute + 1:
+		
+		alreadyReset = 0
+	root.after(1000, checkTime)
+	
 chk1 = check_button(currentCycleTime)
 c1 = Thread(target=chk1.checkloop)
 c1.start()
+root.after(1000, checkTime)
 root.mainloop()
