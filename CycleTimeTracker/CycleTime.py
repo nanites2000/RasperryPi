@@ -170,6 +170,7 @@ class check_button(Thread):
 		
 		
 		def goalPlot():
+			global startTime
 			now=datetime.datetime.now()
 			if  5 <= now.hour < 14:
 				startTime = 6
@@ -179,7 +180,7 @@ class check_button(Thread):
 				breaks = [[14,10],[16,20],[18.5,30]]  #[starttime, length in mins] in order of start time	
 			else: startTime = 22
 			
-			goalxarray= [startTime]
+			goalxarray= [0]
 			goalyarray =[0]
 			goalx = deque(goalxarray)
 			goaly = deque(goalyarray)
@@ -189,24 +190,23 @@ class check_button(Thread):
 			currentTime =now.hour+now.minute/60+now.second/3600
 			for i in breaks:
 				if i[0] <= currentTime < (i[0]+i[1]/60):
-					goalx.append(i[0])
+					goalx.append(i[0]-startTime)
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					goalx.append(currentTime)
+					goalx.append(currentTime- startTime)
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					print("this shouldn't print right now")
+					print("during a break")
 					break
 				if (i[0] + i[1]/60)<= currentTime:
 					
-					goalx.append(i[0])
+					goalx.append(i[0]-startTime)
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					goalx.append(i[0] +i[1]/60)
+					goalx.append(i[0] +i[1]/60-startTime)
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
 					breakSum += i[1]
 					
-			print(breakSum)
-			goalx.append(currentTime)
+			
+			goalx.append(currentTime-startTime)
 			goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
-			print((currentTime-breakSum/60)*3600/cycleGoal)
 			plt.plot(goalx,goaly, 'r')			
 			
 			
@@ -257,9 +257,10 @@ class check_button(Thread):
 						overallAverageValueString.set(round(totalMean,1))
 					#now put the values into the graph and replot
 					now = datetime.datetime.now()
-					timeGraph.append(now.hour + now.minute/60 + now.second/3600)
-					jarGraph.append(count)
 					goalPlot()
+					timeGraph.append(now.hour + now.minute/60 + now.second/3600-startTime)
+					jarGraph.append(count)
+					
 					plt.plot(timeGraph,jarGraph, 'k')#also'ro' works
 					canvas.draw()
 				
