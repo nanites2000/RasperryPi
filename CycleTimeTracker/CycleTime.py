@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(7, hold_time = 7, bounce_time=2)
 cyclingButton = io.DigitalOutputDevice(21)
-cyclingButton.blink(on_time=1,off_time=1)
+cyclingButton.blink(on_time=.1,off_time=.1)
 global previous
 previous = False
 global size
@@ -163,14 +163,22 @@ class check_button(Thread):
 		downtime = 0
 		cycleQueArray =[]
 		cycleQue = deque(cycleQueArray)
-		startTime = 6
+		
 		cycleGoal = 34 #in seconds
 		
 		
 		
 		
 		def goalPlot():
-			breaks = [[6,10],[8.16,20],[11.5,30]]  #[starttime, length in mins]
+			now=datetime.datetime.now()
+			if  5 <= now.hour < 14:
+				startTime = 6
+				breaks = [[6,10],[8.16,20],[11.5,30]]  #[starttime, length in mins] in order of start time
+			elif 14 <= now.hour <22:
+				startTime = 14
+				breaks = [[14,10],[16,20],[18.5,30]]  #[starttime, length in mins] in order of start time	
+			else: startTime = 22
+			
 			goalxarray= [startTime]
 			goalyarray =[0]
 			goalx = deque(goalxarray)
@@ -178,15 +186,39 @@ class check_button(Thread):
 			breakSum = 0 #minutes of break that have accumlated as day goes by.
 			#breaksum keeps the predicted jars needed accurate.
 			
+			currentTime =now.hour+now.minute/60+now.second/3600
 			for i in breaks:
-				goalx.append(i[0])
-				goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-				goalx.append(i[0]+i[1]/60)
-				goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-				breakSum += i[1]
-			goalx.append(startTime+8)
-			goaly.append((8-breakSum/60)*3600/cycleGoal) 	
+				if i[0] <= currentTime < (i[0]+i[1]/60):
+					goalx.append(i[0])
+					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+					goalx.append(currentTime)
+					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+					print("this shouldn't print right now")
+					break
+				if (i[0] + i[1]/60)<= currentTime:
+					
+					goalx.append(i[0])
+					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+					goalx.append(i[0] +i[1]/60)
+					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+					breakSum += i[1]
+					
+			print(breakSum)
+			goalx.append(currentTime)
+			goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
+			print((currentTime-breakSum/60)*3600/cycleGoal)
 			plt.plot(goalx,goaly, 'r')			
+			
+			
+			#for i in breaks:
+			#	goalx.append(i[0])
+			#	goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+			#	goalx.append(i[0]+i[1]/60)
+			#	goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+			#	breakSum += i[1]
+			#goalx.append(startTime+8)
+			#goaly.append((8-breakSum/60)*3600/cycleGoal) 	
+			#plt.plot(goalx,goaly, 'r')			
 			
 		
 		
