@@ -22,7 +22,7 @@ import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(7, hold_time = 7, bounce_time=2)
 cyclingButton = io.DigitalOutputDevice(21)
-cyclingButton.blink(on_time=.04,off_time=.04)
+cyclingButton.blink(on_time=1,off_time=29)
 global previous
 previous = False
 global size
