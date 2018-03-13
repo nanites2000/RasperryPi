@@ -33,9 +33,9 @@ stack = deque(maxlen = size)
 global greenTime
 global yellowTime
 global redTime
-greentime = 2.8
-yellowTime = 3.6
-redTime = 12
+greentime = 28
+yellowTime = 36
+redTime = 120
 global alreadyReset 
 alreadyReset = 0
 
