@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(7, hold_time = 7, bounce_time=2)
 cyclingButton = io.DigitalOutputDevice(21)
-cyclingButton.blink(on_time=.1,off_time=.1)
+cyclingButton.blink(on_time=1,off_time=1)
 global previous
 previous = False
 global size
@@ -65,7 +65,7 @@ def resetShift():
 	#put old data into a textbox
 	previousText.config(state = "normal")
 	previousText.delete("1.0", "end")
-	insertText = "PREVIOUS SHIFT\nDowntime= "+str(downtime) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
+	insertText = "PREVIOUS SHIFT\nDowntime= "+str(round(downtime,1)) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
 	previousText.insert('1.0',insertText)	
 	previousText.config(state = "disabled")
 	
@@ -90,7 +90,7 @@ def resetShift():
 	
 	
 
-	print ("Reset")
+	print ("Reset " + str(datetime.datetime.now()))
 	
 	
 
@@ -171,6 +171,7 @@ class check_button(Thread):
 		
 		def goalPlot():
 			global startTime
+			plotCurrent = 0
 			now=datetime.datetime.now()
 			if  5 <= now.hour < 14:
 				startTime = 6
@@ -178,7 +179,9 @@ class check_button(Thread):
 			elif 14 <= now.hour <22:
 				startTime = 14
 				breaks = [[14,10],[16,20],[18.5,30]]  #[starttime, length in mins] in order of start time	
-			else: startTime = 22
+			else: 
+				startTime = 22
+				breaks = []
 			
 			goalxarray= [0]
 			goalyarray =[0]
@@ -194,7 +197,7 @@ class check_button(Thread):
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
 					goalx.append(currentTime- startTime)
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					print("during a break")
+					plotCurrent = 0
 					break
 				if (i[0] + i[1]/60)<= currentTime:
 					
@@ -203,10 +206,10 @@ class check_button(Thread):
 					goalx.append(i[0] +i[1]/60-startTime)
 					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
 					breakSum += i[1]
-					
-			
-			goalx.append(currentTime-startTime)
-			goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
+					plotCurrent = 1
+			if plotCurrent == 1:
+				goalx.append(currentTime-startTime)
+				goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
 			plt.plot(goalx,goaly, 'r')			
 			
 			
@@ -257,6 +260,7 @@ class check_button(Thread):
 						overallAverageValueString.set(round(totalMean,1))
 					#now put the values into the graph and replot
 					now = datetime.datetime.now()
+					plt.clf()
 					goalPlot()
 					timeGraph.append(now.hour + now.minute/60 + now.second/3600-startTime)
 					jarGraph.append(count)
@@ -408,12 +412,13 @@ root.geometry('1900x1200')
 def checkTime(): # used to check the time to see if it is time to reset the shifts ie 6:00 and 2:00
 	global alreadyReset
 	now = datetime.datetime.now()
-	switchMinute = 41
-	if now.minute == switchMinute and alreadyReset == 0:
+	switchMinute = 0
+	
+	if now.minute == switchMinute and (now.hour==6 or now.hour==2) and alreadyReset == 0:
 		resetShift()
-		print("shift has been reset!!!!!!!!!!!11")
+		print("shift has been reset automatically!!!!!!!!!!! at ", str(now))
 		alreadyReset = 1
-	if now.minute == switchMinute + 1:
+	if (now.minute == switchMinute + 1) and (now.hour==6 or now.hour==2):
 		
 		alreadyReset = 0
 	root.after(1000, checkTime)
