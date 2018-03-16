@@ -21,9 +21,14 @@ matplotlib.use('TkAgg')
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
-inputPressActive = io.Button(7, hold_time = 7, bounce_time=2)
+inputPressActive = io.Button(2)
 cyclingButton = io.DigitalOutputDevice(21)
-cyclingButton.blink(on_time=1,off_time=1)
+#cyclingButton.blink(on_time=1,off_time=1)
+
+
+
+
+
 global previous
 previous = False
 global size
@@ -33,7 +38,7 @@ stack = deque(maxlen = size)
 global greenTime
 global yellowTime
 global redTime
-greentime = 28
+greenTime = 28
 yellowTime = 36
 redTime = 120
 global alreadyReset 
@@ -128,7 +133,7 @@ class check_button(Thread):
 			meanTime = stat.mean(stack)
 			averageCycleTime.set(round(meanTime,1))
 		
-			if meanTime < greentime:	
+			if meanTime < greenTime:	
 				if str(averageCycle['background']) != "green":
 					averageCycle.configure(background = "green")		
 			elif meanTime < yellowTime:
@@ -165,12 +170,16 @@ class check_button(Thread):
 		cycleQue = deque(cycleQueArray)
 		
 		cycleGoal = 34 #in seconds
+		buttonCount = 0
 		
-		
+
 		
 		
 		def goalPlot():
 			global startTime
+			global greenTime
+			global yellowTime
+			global redTime
 			plotCurrent = 0
 			now=datetime.datetime.now()
 			if  5 <= now.hour < 14:
@@ -224,7 +233,6 @@ class check_button(Thread):
 			#plt.plot(goalx,goaly, 'r')			
 			
 		
-		
 		while True:
 
 			#print(inputPressActive.is_held)
@@ -236,8 +244,14 @@ class check_button(Thread):
 				#if debounce >= debounceMax:
 					#previous = 0
 					#debounce = 0
+			if inputPressActive.is_pressed and buttonCount < 1000:
+				buttonCount +=1
+			if not inputPressActive.is_pressed and buttonCount > 0:
+				buttonCount -=1
+			print(buttonCount)
 			
-			if inputPressActive.is_pressed and previous == 0:
+			
+			if buttonCount > 800 and previous == 0:
 				#if self.b == False :
 					
 					#print ("on")
@@ -287,14 +301,14 @@ class check_button(Thread):
 			#changes the background if not already that color		
 			cycleTime = time.time()-cycleTimeStamp
 				
-			if cycleTime < 2.8:	
+			if cycleTime < greenTime:	
 				if str(currentCycle['background']) != "green":
 					currentCycle.configure(background = "green")
 					
-			elif cycleTime < 3.6:
+			elif cycleTime < yellowTime:
 				if str(currentCycle['background']) != "yellow":
 					currentCycle.configure(background = "yellow")
-			elif cycleTime < 12.0:
+			elif cycleTime < redTime:
 				if str(currentCycle['background']) != "red":
 					currentCycle.configure(background = "red")
 			else: 
@@ -304,8 +318,10 @@ class check_button(Thread):
 			if  inputPressActive.is_pressed == 0:
 				debounce += 1
 				
-			if debounce > 1000 and inputPressActive.is_pressed == 0: #this is used for debounce
+			#if debounce > 1000 and inputPressActive.is_pressed == 0: #this is used for debounce
+			if buttonCount == 0:
 				previous = 0
+				
 					
 				
 				#else:
