@@ -7,9 +7,10 @@ from collections import deque
 import statistics as stat
 import datetime
 import numpy as np
-
-
+import pyautogui
 import sqlite3
+
+#set up the database
 try:
 	connection = sqlite3.connect("cycleTime.db",check_same_thread = False)
 	cursor = connection.cursor()
@@ -22,7 +23,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(2)
-cyclingButton = io.DigitalOutputDevice(21)
+#cyclingButton = io.DigitalOutputDevice(21)
 #cyclingButton.blink(on_time=1,off_time=1)
 
 
@@ -248,7 +249,7 @@ class check_button(Thread):
 				buttonCount +=1
 			if not inputPressActive.is_pressed and buttonCount > 0:
 				buttonCount -=1
-			print(buttonCount)
+			
 			
 			
 			if buttonCount > 800 and previous == 0:
@@ -288,6 +289,11 @@ class check_button(Thread):
 					sql_command ="INSERT INTO AutoJarCycleTimes (datetime, cycleTime) VALUES ('%s', %s);" %(timestring,cycleTime)
 					cursor.execute(sql_command) 
 					connection.commit()
+					
+					#keeps screen saver off
+					pyautogui.moveRel(1, 0, duration=0.01)
+					pyautogui.moveRel(-1, 0, duration=0.01)
+
 					
 					#cursor.execute("SELECT AVG(cycleTime) FROM autojarcycletimes")
 					#print("fetchall:")
