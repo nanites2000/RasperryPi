@@ -23,8 +23,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(2)
-#cyclingButton = io.DigitalOutputDevice(21)
-#cyclingButton.blink(on_time=1,off_time=1)
+cyclingButton = io.DigitalOutputDevice(21)
+cyclingButton.blink(on_time=.2,off_time=1)
 
 
 
@@ -66,14 +66,19 @@ def resetShift():
 	global cycleQue
 	global jarGraph
 	global timeGraph
+	global cycleTimeStamp
 	
 	
 	#put old data into a textbox
 	previousText.config(state = "normal")
 	previousText.delete("1.0", "end")
-	insertText = "PREVIOUS SHIFT\nDowntime= "+str(round(downtime,1)) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
-	previousText.insert('1.0',insertText)	
-	previousText.config(state = "disabled")
+	scheduledBreaksTime = check_button.goalPlot()
+	try:
+		insertText = "PREVIOUS SHIFT\nDowntime= "+str(round(downtime/60,1)) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
+		previousText.insert('1.0',insertText)	
+		previousText.config(state = "disabled")
+	except:
+		print("Reset too early")
 	
 	
 	downtime = 0
@@ -90,6 +95,14 @@ def resetShift():
 	jarGraph = []
 	timeGraph = []
 	
+	#set the shift start as the first time stamp on bootup
+	timeList= list(time.localtime())
+	timeList[3] = startTime - startTime % 1
+	timeList[4] = (startTime - timeList[3])*60
+	timeTuple = tuple(timeList)
+	cycleTimeStamp = time.mktime(timeTuple) #convert back to a time object
+		
+	#cycleTimeStamp = time.time() # this keeps downtime from the night before from counting
 	#reset the graph
 	plt.clf()
 	canvas.draw()
@@ -160,21 +173,9 @@ class check_button(Thread):
 		global cycleQue
 		global timeGraph
 		global jarGraph
-		
-		debounceMax = .5
-		debounce = 0
-		count = 0
-		cycleTime = 0
-		cycleTimeStamp = time.time()
-		downtime = 0
-		cycleQueArray =[]
-		cycleQue = deque(cycleQueArray)
-		
+		global cycleTimeStamp
+		global startTime
 		cycleGoal = 34 #in seconds
-		buttonCount = 0
-		
-
-		
 		
 		def goalPlot():
 			global startTime
@@ -183,6 +184,7 @@ class check_button(Thread):
 			global redTime
 			plotCurrent = 0
 			now=datetime.datetime.now()
+			currentTime =now.hour+now.minute/60+now.second/3600
 			if  5 <= now.hour < 14:
 				startTime = 6
 				breaks = [[6,10],[8.16,20],[11.5,30]]  #[starttime, length in mins] in order of start time
@@ -192,7 +194,12 @@ class check_button(Thread):
 			else: 
 				startTime = 22
 				breaks = []
-			
+			#this keeps track of breaks passed to subtract from the downtime total
+			scheduledBreaksTime = 0
+			for i in breaks:
+				if ((i[0] +i[1]/60) < currentTime):
+					scheduledBreaksTime += i[1]
+					
 			goalxarray= [0]
 			goalyarray =[0]
 			goalx = deque(goalxarray)
@@ -200,7 +207,7 @@ class check_button(Thread):
 			breakSum = 0 #minutes of break that have accumlated as day goes by.
 			#breaksum keeps the predicted jars needed accurate.
 			
-			currentTime =now.hour+now.minute/60+now.second/3600
+			
 			for i in breaks:
 				if i[0] <= currentTime < (i[0]+i[1]/60):
 					goalx.append(i[0]-startTime)
@@ -221,7 +228,33 @@ class check_button(Thread):
 				goalx.append(currentTime-startTime)
 				goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
 			plt.plot(goalx,goaly, 'r')			
-			
+			return scheduledBreaksTime
+		
+		debounceMax = .5
+		debounce = 0
+		count = 0
+		cycleTime = 0
+		s= goalPlot()	
+		
+		#set the shift start as the first time stamp on bootup
+		timeList= list(time.localtime())
+		timeList[3] = startTime - startTime % 1
+		timeList[4] = (startTime - timeList[3])*60
+		timeTuple = tuple(timeList)
+		cycleTimeStamp = time.mktime(timeTuple) #convert back to a time object
+		
+		downtime = 0
+		cycleQueArray =[]
+		cycleQue = deque(cycleQueArray)
+		
+		
+		buttonCount = 0
+		scheduledBreaksTime = 0  # keeps track of breaks that have passed to subract from total downtime
+		
+
+		
+		
+		
 			
 			#for i in breaks:
 			#	goalx.append(i[0])
@@ -262,23 +295,29 @@ class check_button(Thread):
 					#print(count)
 					countValueString.set(count)
 					currentCycleTime.set(round(cycleTime,1))
-					cycleTimeStamp = time.time()
+					
 					debounce = 0
+					
+					now = datetime.datetime.now()
+					nowTime = now.hour + now.minute/60 + now.second/3600
+					plt.clf()
+					scheduledBreaksTime = goalPlot()
 					self.movingAverage(cycleTime)#calculates the moving average of last values	
-					if cycleTime > redTime:
+					
+					if cycleTime > redTime:# and (nowTime-cycleTime/3600)>startTime and cycleTimeStamp<time.time():# the second condition prevents downtime from reading all night
 						downtime+=cycleTime
-						downtimeValueString.set(round(downtime/60, 1))
+						downtimeValueString.set(round(downtime/60, 1)-scheduledBreaksTime)
 					#fond the average of all the daily values	
 					if cycleTime < redTime:
 						cycleQue.append(cycleTime)
 						totalMean = stat.mean(cycleQue)
 						overallAverageValueString.set(round(totalMean,1))
 					#now put the values into the graph and replot
-					now = datetime.datetime.now()
-					plt.clf()
-					goalPlot()
-					timeGraph.append(now.hour + now.minute/60 + now.second/3600-startTime)
+					
+					cycleTimeStamp = time.time()
+					timeGraph.append(nowTime-startTime)
 					jarGraph.append(count)
+					
 					
 					plt.plot(timeGraph,jarGraph, 'k')#also'ro' works
 					canvas.draw()
@@ -440,8 +479,7 @@ def checkTime(): # used to check the time to see if it is time to reset the shif
 		resetShift()
 		print("shift has been reset automatically!!!!!!!!!!! at ", str(now))
 		alreadyReset = 1
-	if (now.minute == switchMinute + 1) and (now.hour==6 or now.hour==2):
-		
+	if (now.minute == switchMinute + 1) and (now.hour==6 or now.hour==2):	
 		alreadyReset = 0
 	root.after(1000, checkTime)
 	
