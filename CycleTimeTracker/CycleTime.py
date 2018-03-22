@@ -474,16 +474,16 @@ plt.title('Production')
 root.title("Cycle Time") 
 root.geometry('1900x1200')
 
-def checkTime(): # used to check the time to see if it is time to reset the shifts ie 6:00 and 2:00
+def checkTime(): # used to check the time to see if it is time to reset the shifts ie 6:00 and 2:00(14:00 military time)
 	global alreadyReset
 	now = datetime.datetime.now()
 	switchMinute = 0
 	
-	if now.minute == switchMinute and (now.hour==6 or now.hour==2) and alreadyReset == 0:
+	if now.minute == switchMinute and (now.hour==6 or now.hour==14) and alreadyReset == 0:
 		resetShift()
 		print("shift has been reset automatically!!!!!!!!!!! at ", str(now))
 		alreadyReset = 1
-	if (now.minute == switchMinute + 1) and (now.hour==6 or now.hour==2):	
+	if (now.minute == switchMinute + 1) and (now.hour==6 or now.hour==14):	
 		alreadyReset = 0
 	root.after(1000, checkTime)
 	
