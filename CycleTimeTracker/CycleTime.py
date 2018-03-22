@@ -44,6 +44,7 @@ yellowTime = 36
 redTime = 120
 global alreadyReset 
 alreadyReset = 0
+cycleGoal = 34 #in seconds
 
 
 
@@ -55,7 +56,58 @@ cycleTime REAL
 );"""
 cursor.execute(sql_command)
 
-
+def goalPlot():
+	global startTime
+	global greenTime
+	global yellowTime
+	global redTime
+	plotCurrent = 0
+	now=datetime.datetime.now()
+	currentTime =now.hour+now.minute/60+now.second/3600
+	if  5 <= now.hour < 14:
+		startTime = 6
+		breaks = [[6,10],[8.16,20],[11.5,30]]  #[starttime, length in mins] in order of start time
+	elif 14 <= now.hour <22:
+		startTime = 14
+		breaks = [[14,10],[16,20],[18.5,30]]  #[starttime, length in mins] in order of start time	
+	else: 
+		startTime = 22
+		breaks = []
+	#this keeps track of breaks passed to subtract from the downtime total
+	scheduledBreaksTime = 0
+	for i in breaks:
+		if ((i[0] +i[1]/60) < currentTime):
+			scheduledBreaksTime += i[1]
+			
+	goalxarray= [0]
+	goalyarray =[0]
+	goalx = deque(goalxarray)
+	goaly = deque(goalyarray)
+	breakSum = 0 #minutes of break that have accumlated as day goes by.
+	#breaksum keeps the predicted jars needed accurate.
+	
+	
+	for i in breaks:
+		if i[0] <= currentTime < (i[0]+i[1]/60):
+			goalx.append(i[0]-startTime)
+			goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+			goalx.append(currentTime- startTime)
+			goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+			plotCurrent = 0
+			break
+		if (i[0] + i[1]/60)<= currentTime:
+			
+			goalx.append(i[0]-startTime)
+			goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+			goalx.append(i[0] +i[1]/60-startTime)
+			goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
+			breakSum += i[1]
+			plotCurrent = 1
+	if plotCurrent == 1:
+		goalx.append(currentTime-startTime)
+		goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
+	plt.plot(goalx,goaly, 'r')			
+	return scheduledBreaksTime
 
 
 def resetShift():
@@ -72,9 +124,9 @@ def resetShift():
 	#put old data into a textbox
 	previousText.config(state = "normal")
 	previousText.delete("1.0", "end")
-	scheduledBreaksTime = check_button.goalPlot()
+	scheduledBreaksTime = goalPlot()
 	try:
-		insertText = "PREVIOUS SHIFT\nDowntime= "+str(round(downtime/60,1)) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
+		insertText = "PREVIOUS SHIFT\nDowntime= "+str(round(downtime/60-scheduledBreaksTime,1)) + "\nCount= " + str(count)+"\nAverage= "+ str(round(totalMean,1)) +' '
 		previousText.insert('1.0',insertText)	
 		previousText.config(state = "disabled")
 	except:
@@ -82,7 +134,7 @@ def resetShift():
 	
 	
 	downtime = 0
-	stack = []
+	stack = deque(maxlen = size)
 	downtimeValueString.set(0)
 	count = 0
 	countValueString.set(count)
@@ -139,12 +191,13 @@ class check_button(Thread):
 		global stack
 		global redTime
 		global meanTime
-		size =10
+		
 		
 		
 		if newTime < redTime:
 			stack.append(newTime)
 			meanTime = stat.mean(stack)
+			print (stack) #delete me
 			averageCycleTime.set(round(meanTime,1))
 		
 			if meanTime < greenTime:	
@@ -159,6 +212,7 @@ class check_button(Thread):
 			else: 
 				if str(averageCycle['background']) != "purple":
 					averageCycle.configure(background = "purple")
+					
 			
 
 	def checkloop(self):
@@ -175,66 +229,15 @@ class check_button(Thread):
 		global jarGraph
 		global cycleTimeStamp
 		global startTime
-		cycleGoal = 34 #in seconds
 		
-		def goalPlot():
-			global startTime
-			global greenTime
-			global yellowTime
-			global redTime
-			plotCurrent = 0
-			now=datetime.datetime.now()
-			currentTime =now.hour+now.minute/60+now.second/3600
-			if  5 <= now.hour < 14:
-				startTime = 6
-				breaks = [[6,10],[8.16,20],[11.5,30]]  #[starttime, length in mins] in order of start time
-			elif 14 <= now.hour <22:
-				startTime = 14
-				breaks = [[14,10],[16,20],[18.5,30]]  #[starttime, length in mins] in order of start time	
-			else: 
-				startTime = 22
-				breaks = []
-			#this keeps track of breaks passed to subtract from the downtime total
-			scheduledBreaksTime = 0
-			for i in breaks:
-				if ((i[0] +i[1]/60) < currentTime):
-					scheduledBreaksTime += i[1]
-					
-			goalxarray= [0]
-			goalyarray =[0]
-			goalx = deque(goalxarray)
-			goaly = deque(goalyarray)
-			breakSum = 0 #minutes of break that have accumlated as day goes by.
-			#breaksum keeps the predicted jars needed accurate.
-			
-			
-			for i in breaks:
-				if i[0] <= currentTime < (i[0]+i[1]/60):
-					goalx.append(i[0]-startTime)
-					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					goalx.append(currentTime- startTime)
-					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					plotCurrent = 0
-					break
-				if (i[0] + i[1]/60)<= currentTime:
-					
-					goalx.append(i[0]-startTime)
-					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					goalx.append(i[0] +i[1]/60-startTime)
-					goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-					breakSum += i[1]
-					plotCurrent = 1
-			if plotCurrent == 1:
-				goalx.append(currentTime-startTime)
-				goaly.append((currentTime-startTime-breakSum/60)*3600/cycleGoal) 	
-			plt.plot(goalx,goaly, 'r')			
-			return scheduledBreaksTime
+		
+
 		
 		debounceMax = .5
 		debounce = 0
 		count = 0
 		cycleTime = 0
-		s= goalPlot()	
+		goalPlot()	
 		
 		#set the shift start as the first time stamp on bootup
 		timeList= list(time.localtime())
@@ -306,11 +309,12 @@ class check_button(Thread):
 					
 					if cycleTime > redTime:# and (nowTime-cycleTime/3600)>startTime and cycleTimeStamp<time.time():# the second condition prevents downtime from reading all night
 						downtime+=cycleTime
-						downtimeValueString.set(round(downtime/60, 1)-scheduledBreaksTime)
+						downtimeValueString.set(round(downtime/60-scheduledBreaksTime, 1))
 					#fond the average of all the daily values	
 					if cycleTime < redTime:
 						cycleQue.append(cycleTime)
 						totalMean = stat.mean(cycleQue)
+						#print(cycleQue) #delete me
 						overallAverageValueString.set(round(totalMean,1))
 					#now put the values into the graph and replot
 					
