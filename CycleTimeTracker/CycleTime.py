@@ -23,8 +23,8 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import matplotlib.pyplot as plt
 
 inputPressActive = io.Button(2)
-cyclingButton = io.DigitalOutputDevice(21)
-cyclingButton.blink(on_time=.2,off_time=1)
+cyclingButton = io.LED(21)
+cyclingButton.blink(on_time=2,off_time=7)
 
 
 
@@ -197,7 +197,6 @@ class check_button(Thread):
 		if newTime < redTime:
 			stack.append(newTime)
 			meanTime = stat.mean(stack)
-			print (stack) #delete me
 			averageCycleTime.set(round(meanTime,1))
 		
 			if meanTime < greenTime:	
@@ -238,7 +237,6 @@ class check_button(Thread):
 		count = 0
 		cycleTime = 0
 		goalPlot()	
-		
 		#set the shift start as the first time stamp on bootup
 		timeList= list(time.localtime())
 		timeList[3] = startTime - startTime % 1
@@ -281,14 +279,17 @@ class check_button(Thread):
 				#if debounce >= debounceMax:
 					#previous = 0
 					#debounce = 0
-			if inputPressActive.is_pressed and buttonCount < 1000:
+
+					
+					
+			if inputPressActive.is_pressed and buttonCount < 10:
 				buttonCount +=1
 			if not inputPressActive.is_pressed and buttonCount > 0:
 				buttonCount -=1
 			
 			
 			
-			if buttonCount > 800 and previous == 0:
+			if buttonCount > 8 and previous == 0:
 				#if self.b == False :
 					
 					#print ("on")
@@ -298,6 +299,8 @@ class check_button(Thread):
 					#print(count)
 					countValueString.set(count)
 					currentCycleTime.set(round(cycleTime,1))
+					cycleTimeStamp = time.time()
+					
 					
 					debounce = 0
 					
@@ -314,11 +317,10 @@ class check_button(Thread):
 					if cycleTime < redTime:
 						cycleQue.append(cycleTime)
 						totalMean = stat.mean(cycleQue)
-						#print(cycleQue) #delete me
 						overallAverageValueString.set(round(totalMean,1))
 					#now put the values into the graph and replot
 					
-					cycleTimeStamp = time.time()
+					
 					timeGraph.append(nowTime-startTime)
 					jarGraph.append(count)
 					
@@ -336,13 +338,8 @@ class check_button(Thread):
 					#keeps screen saver off
 					pyautogui.moveRel(1, 0, duration=0.01)
 					pyautogui.moveRel(-1, 0, duration=0.01)
-
 					
-					#cursor.execute("SELECT AVG(cycleTime) FROM autojarcycletimes")
-					#print("fetchall:")
-					#result = cursor.fetchall()
-					#for r in result:
-					#	print(r)
+					
 
 					
 					
