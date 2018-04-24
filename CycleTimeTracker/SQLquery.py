@@ -1,11 +1,13 @@
+
 import sqlite3
+
 try:
 	connection = sqlite3.connect("cycleTime.db",check_same_thread = False)
 	cursor = connection.cursor()
 except:
 	print("Database Filed to Connect")
 	
-	
+'''	
 #this finds the production during the minute of 4:00pm-4:01pm	from yesterday
 cursor.execute("SELECT * FROM autojarcycletimes WHERE date('now', '-1 day') = date(datetime) and strftime('%H:%M',datetime) = '16:00'")
 print("fetchall:")
@@ -64,5 +66,174 @@ cursor.execute(statement)
 print("fetchall month sums:")
 result = cursor.fetchall()
 for r in result:
-	print(r)			
+	print(r)		
+'''
 
+
+print("1st Shift production last 40 days")
+#look at all production by date for each shift
+statement = "SELECT date(datetime),count(cycleTime) FROM autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day')GROUP BY date(datetime) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)
+	
+	
+	
+print("2nd Shift production last 40 days")	
+#look at all production by date for each shift
+statement = "SELECT date(datetime),count(cycleTime) as alias  FROM autojarcycletimes where time(datetime) BETWEEN '14:00:00' and '22:00:00' AND date(datetime) >=date('now', '-40 day')GROUP BY date(datetime) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)
+
+print("1st Shift average cycle time last 40 days")
+#look at all production by date for each shift
+statement = "select avg(average) from(SELECT avg(cycleTime)as average FROM autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day') and cycleTime < 300 GROUP BY date(datetime)) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)
+	
+print("2nd Shift average cycle time last 40 days")
+#look at all production by date for each shift
+statement = "select avg(average) from(SELECT avg(cycleTime)as average FROM autojarcycletimes where time(datetime) BETWEEN '14:00:00' and '22:00:00' AND date(datetime) >=date('now', '-40 day') AND cycleTime <300 GROUP BY date(datetime)) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)
+	
+
+"""
+print("1st Shift last 40 days")
+#look at all production by date for each shift
+statement = '''
+select first.date as date,first.count,second.count
+from 
+(SELECT date(datetime) as date,count(cycleTime) as count 
+FROM autojarcycletimes 
+where time(datetime) BETWEEN '06:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day')
+GROUP BY date(datetime)
+) as first
+LEFT JOIN
+(SELECT date(datetime) as date,count(cycleTime) as count 
+FROM autojarcycletimes 
+where time(datetime) BETWEEN '14:00:00' and '22:00:00' AND date(datetime) >=date('now', '-40 day')
+GROUP BY date(datetime)
+) as second
+on first.date=second.date 
+
+UNION 
+
+select second.date as date,first.count,second.count
+from 
+(SELECT date(datetime) as date,count(cycleTime) as count 
+FROM autojarcycletimes 
+where time(datetime) BETWEEN '14:00:00' and '22:00:00' AND date(datetime) >=date('now', '-40 day')
+GROUP BY date(datetime)
+) as second
+LEFT JOIN
+(SELECT date(datetime) as date,count(cycleTime) as count 
+FROM autojarcycletimes 
+where time(datetime) BETWEEN '6:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day')
+GROUP BY date(datetime)
+) as first
+on first.date = second.date
+
+
+
+ '''
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)	
+	
+	
+	
+print("why Shift last 40 days")
+#look at all production by date for each shift
+statement = '''
+select date
+from 
+(SELECT date(datetime) as date,count(cycleTime) as count 
+FROM autojarcycletimes 
+where time(datetime) BETWEEN '14:00:00' and '22:00:00' AND date(datetime) >=date('now', '-40 day')
+GROUP BY date(datetime)
+)'''
+#where date(second.date) in 
+#("SELECT date(datetime) FROM autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day')GROUP BY date(datetime) "
+#) 
+
+
+'''
+#statement= "select * from (SELECT date(datetime) as date,count(cycleTime) as count FROM autojarcycletimes where time(datetime) BETWEEN '14:00:00' and '22:00:00' AND date(datetime) >=date('now', '-40 day') GROUP BY date(datetime))"
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)	
+	
+	
+print("sub query")
+#look at all production by date for each shift
+statement = '''
+SELECT date(datetime) 
+FROM autojarcycletimes 
+where time(datetime) BETWEEN '6:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day')
+GROUP BY date(datetime)
+ '''
+statement = "SELECT date(datetime) FROM autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00' AND date(datetime) >=date('now', '-40 day')GROUP BY date(datetime) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)		
+	
+	
+
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+print("Both Shifts")	
+#look at all production by date for each shift
+statement = "SELECT date(datetime), count((select cycleTime from autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00 group by date(datetime)')) from autojarcycletimes group by date(datetime)"
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)	
+
+print("Both Shifts")	
+#look at all production by date for each shift
+statement = "select date(datetime), (select count(date(datetime)) from autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00' group by date(datetime)) first from autojarcycletimes  group by date(datetime) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)	
+
+
+
+print("Both Shifts")	
+#look at all production by date for each shift
+statement = "select count(date(datetime)) from autojarcycletimes where time(datetime) BETWEEN '06:00:00' and '14:00:00' group by date(datetime) "
+cursor.execute(statement)
+result = cursor.fetchall()
+for r in result:
+	print(r)	"""
