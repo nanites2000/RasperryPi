@@ -48,13 +48,104 @@ cycleGoal = 34 #in seconds
 
 
 
+class MyDialog:
+
+    def __init__(self, parent):
+        top = self.top = Toplevel(parent)
+        self.TopLabel = Label(top, text='Enter the information below:')
+        self.TopLabel.grid(row=0,column=1)
+        self.TopLabel.config(font=("Courier", 15))
+
+
+        self.mySubmitButton = Button(top, text='Submit', command=self.send)
+        self.mySubmitButton.grid(row=4, column=1)
+        self.mySubmitButton.config(font=("Courier", 35))
+
+        self.operatorLabel=Label(top, text='Select Operator')
+        self.operatorLabel.grid(row=1, column=0)
+        self.operatorLabel.config(font=("Courier", 15))
+
+        with open('operators.txt') as f:
+            operators = f.read().splitlines()
+        self.operatorName = StringVar(value=operators)
+        self.operatorListbox = Listbox(top, height=15, listvariable=self.operatorName,exportselection=0)
+        self.operatorListbox.grid(row=2, column=0)
+        self.operatorListbox.config(font=("Courier", 15))
+
+        self.machineLabel = Label(top, text='Select CNC Number')
+        self.machineLabel.grid(row=1, column=1)
+        self.machineLabel.config(font=("Courier", 15))
+
+        with open('machines.txt') as f:
+            machines = f.read().splitlines()
+        self.machines = StringVar(value=machines)
+        self.machineListbox = Listbox(top, height=15, listvariable=self.machines,exportselection=0)
+        self.machineListbox.grid(row=2, column=1)
+        self.machineListbox.config(font=("Courier", 15))
+
+        self.partsLabel = Label(top, text='Select Part Number')
+        self.partsLabel.grid(row=1, column=2)
+        self.partsLabel.config(font=("Courier", 15))
+
+        with open('parts.txt') as f:
+            parts = f.read().splitlines()
+        self.parts = StringVar(value=parts)
+        self.partListbox = Listbox(top, height=15, listvariable=self.parts, exportselection=0)
+        self.partListbox.grid(row=2, column=2)
+        self.partListbox.config(font=("Courier", 15))
+
+
+
+    def send(self):
+        global user
+        global machine
+        global part
+        global reconfig
+        # self.userSelected = self.operatorListbox.get(self.operatorListbox.curselection())
+        # self.machineSelected = self.machineListbox.get(self.machineListbox.curselection())
+        # self.partSelected = self.partListbox.get(self.partListbox.curselection())
+        user = self.operatorListbox.get(self.operatorListbox.curselection())
+        machine = self.machineListbox.get(self.machineListbox.curselection())
+        part = self.partListbox.get(self.partListbox.curselection())
+        updateCurrent()
+        reconfig=0
+        plt.figure(1)
+        plt.clf()
+        plt.gcf().canvas.draw()
+        valueEntry.delete(0, 'end')
+        self.top.destroy()
+
+def onClick():
+    inputDialog = MyDialog(root)
+    root.wait_window(inputDialog.top)
+
+
+
+
+
+
+
+
+
 #set up the table to enter data into
 sql_command = """
 CREATE TABLE  IF NOT EXISTS AutoJarCycleTimes ( 
+rowid INTEGER PRIMARY KEY,
 datetime text,
 cycleTime REAL 
 );"""
 cursor.execute(sql_command)
+
+sql_command = """
+CREATE TABLE  IF NOT EXISTS JarCycleDowntimeReasons ( 
+rowid INTEGER PRIMARY KEY,
+category text,
+listgroup text,
+reason text); 
+);"""
+cursor.execute(sql_command)
+
+
 
 def goalPlot():
 	global startTime
@@ -357,8 +448,12 @@ class check_button(Thread):
 			elif cycleTime < redTime:
 				if str(currentCycle['background']) != "red":
 					currentCycle.configure(background = "red")
-			else: 
+			else:
+				#clear old downtime reasons and open the window to enter the new downtime
+				
 				if str(currentCycle['background']) != "purple":
+					print("onclick")
+					onClick()
 					currentCycle.configure(background = "purple")
 					
 			if  inputPressActive.is_pressed == 0:
@@ -444,10 +539,13 @@ overallAverageValue = ttk.Label(buttonframe,textvariable=overallAverageValueStri
 overallAverageValue.config(font=('Helvetica',75,'bold'))
 overallAverageValue.grid(row=0,column=5, sticky=(E,W))
 
-shiftReset = Button(buttonframe, text = 'New Shift', command = resetShift)
-shiftReset.grid(row=0,column=6)
-shiftReset.config(font=('Helvetica',75,'bold'))
-shiftReset.config(bg=("light blue"))
+downtimeButton = Button(buttonframe, text='Downtime', command=onClick)
+downtimeButton.grid(row=0,column=6)
+downtimeButton.config(font=('Helvetica',60,'bold'))
+downtimeButton.config(bg=("light blue"))
+
+
+
 
 fig = plt.figure(1)
 canvas = FigureCanvasTkAgg(fig, master=root)
