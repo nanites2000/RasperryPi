@@ -32,5 +32,21 @@ on the desktop.
 
 
 
-Then yo ucan install GIT if you want to and link it to Bitbucket
+Then you can install GIT if you want to and link it to Bitbucket
+
+
+To install a printer
+first update software
+   sudo apt-get update
+then install cups
+   sudo apt-get install cups-client
+then open the file for editing
+   sudo vi /etc/cups/client.conf 
+then edit by adding this line with the proper IP address
+	ServerName XXX.XXX.XXX.XXX  ## XXX.XXX.XXX.XXX is your networked printer's IP sddress
+
+to find the printer IP in windows
+open the printer from the control panel
+right click the printer and select printer properties
+click the ports tab and widen the first column which has the ip in it
 
