@@ -35,7 +35,7 @@ on the desktop.
 Then you can install GIT if you want to and link it to Bitbucket
 
 
-To install a printer
+To install a printer- this might work i don't know
 first update software
    sudo apt-get update
 then install cups
