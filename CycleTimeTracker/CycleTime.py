@@ -129,7 +129,7 @@ def onClick():
 
 #set up the table to enter data into
 sql_command = """
-CREATE TABLE  IF NOT EXISTS AutoJarCycleTimes ( 
+CREATE TABLE  IF NOT EXISTS CycleTimes ( 
 rowid INTEGER PRIMARY KEY,
 datetime text,
 cycleTime REAL 
@@ -137,7 +137,7 @@ cycleTime REAL
 cursor.execute(sql_command)
 
 sql_command = """
-CREATE TABLE  IF NOT EXISTS JarCycleDowntimeReasons ( 
+CREATE TABLE  IF NOT EXISTS DowntimeReasons ( 
 rowid INTEGER PRIMARY KEY,
 category text,
 listgroup text,
@@ -245,8 +245,6 @@ def resetShift():
 	timeTuple = tuple(timeList)
 	cycleTimeStamp = time.mktime(timeTuple) #convert back to a time object
 		
-	#cycleTimeStamp = time.time() # this keeps downtime from the night before from counting
-	#reset the graph
 	plt.clf()
 	canvas.draw()
 	
@@ -345,34 +343,8 @@ class check_button(Thread):
 		
 
 		
-		
-		
-			
-			#for i in breaks:
-			#	goalx.append(i[0])
-			#	goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-			#	goalx.append(i[0]+i[1]/60)
-			#	goaly.append((i[0]-startTime-breakSum/60)*3600/cycleGoal)
-			#	breakSum += i[1]
-			#goalx.append(startTime+8)
-			#goaly.append((8-breakSum/60)*3600/cycleGoal) 	
-			#plt.plot(goalx,goaly, 'r')			
-			
-		
 		while True:
 
-			#print(inputPressActive.is_held)
-			#print(debounce)
-			#labelText1.set(GPIO.input(7))
-			#if inputPressActive.is_pressed == 0 and debounce < debounceMax:
-				#debounce+= 1
-				#print(debounce)
-				#if debounce >= debounceMax:
-					#previous = 0
-					#debounce = 0
-
-					
-					
 			if inputPressActive.is_pressed and buttonCount < 10:
 				buttonCount +=1
 			if not inputPressActive.is_pressed and buttonCount > 0:
@@ -562,7 +534,7 @@ timeGraph = deque(a)
 jarGraph = deque(b)
 plt.plot(timeGraph,jarGraph, 'k')
 plt.xlabel('Time')
-plt.ylabel('Jars')
+plt.ylabel('Made')
 plt.title('Production')
 
 
